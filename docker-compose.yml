@@ -1,0 +1,52 @@
+services:
+  ftp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: z3tech/vsftpd:latest
+    container_name: vsftpd
+    restart: unless-stopped
+    environment:
+      - FTP_USERS=admin:admin123
+      - FTP_ROOT=/data
+      - PUID=1000
+      - PGID=1000
+
+
+# Modo PASSIVO
+      - PASV_ENABLE=YES
+      - PASV_MIN_PORT=21100
+      - PASV_MAX_PORT=21110
+# Ajuste para seu IP público ou FQDN
+      - PASV_ADDRESS=192.168.0.1
+      - PASV_ADDR_RESOLVE=NO
+
+
+# TLS (FTPS) opcional
+      - FTP_TLS=NO
+      - TLS_CRT_PATH=/etc/ssl/private/vsftpd.crt
+      - TLS_KEY_PATH=/etc/ssl/private/vsftpd.key
+
+
+# Logs e permissões
+      - LOG_STDOUT=YES
+      - XFERLOG_STD_FORMAT=NO
+      - LOCAL_UMASK=022
+      - FILE_OPEN_MODE=0666
+
+
+# Segurança extra
+      - PASV_PROMISCUOUS=NO
+      - PORT_PROMISCUOUS=NO
+      - TZ=America/Sao_Paulo
+
+
+    ports:
+      - "21:21"
+      - "20:20"
+      - "21100-21110:21100-21110"
+
+
+    volumes:
+      - ./data:/data
+      - ./logs:/var/log/vsftpd

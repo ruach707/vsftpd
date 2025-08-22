@@ -1,0 +1,51 @@
+# config/vsftpd.conf.tmpl
+
+
+listen=YES
+listen_ipv6=NO
+
+
+anonymous_enable=NO
+local_enable=YES
+write_enable=YES
+
+
+# Segurança de chroot: usuário fica preso no próprio diretório
+chroot_local_user=YES
+allow_writeable_chroot=YES
+
+
+local_umask={{LOCAL_UMASK}}
+file_open_mode={{FILE_OPEN_MODE}}
+
+
+# Diretório raiz base
+secure_chroot_dir=/var/run/vsftpd/empty
+pam_service_name=vsftpd
+user_sub_token=$USER
+local_root={{FTP_ROOT}}/$USER
+
+
+# Logging (arquivo regular)
+vsftpd_log_file=/var/log/vsftpd/vsftpd.log
+log_ftp_protocol=YES
+
+
+# Performance e compatibilidade
+use_localtime=YES
+idle_session_timeout=600
+data_connection_timeout=120
+
+
+# Ativo (porta 20) e Passivo configurável
+connect_from_port_20=YES
+pasv_enable={{PASV_ENABLE}}
+pasv_min_port={{PASV_MIN_PORT}}
+pasv_max_port={{PASV_MAX_PORT}}
+pasv_addr_resolve={{PASV_ADDR_RESOLVE}}
+pasv_promiscuous={{PASV_PROMISCUOUS}}
+port_promiscuous={{PORT_PROMISCUOUS}}
+
+
+# Mantém o processo em foreground dentro do container
+background=NO

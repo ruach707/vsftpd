@@ -1,0 +1,8 @@
+# Não envie dados/logs reais para o build context
+/data
+/logs
+.git
+.gitignore
+*.zip
+*.tar
+*.tar.gz
