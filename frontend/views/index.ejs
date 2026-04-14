@@ -2,51 +2,313 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Gerenciamento vsftpd</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FTP Management Dashboard</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h1, h2 { color: #333; }
-    form { margin-bottom: 20px; }
-    input, button { padding: 8px; margin: 5px; }
-    .logs { background: #f4f4f4; padding: 10px; max-height: 300px; overflow-y: scroll; }
-    .users { list-style: none; padding: 0; }
-    .users li { background: #e9e9e9; margin: 5px 0; padding: 10px; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    header h1 {
+      font-size: 24px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .user-info {
+      font-size: 14px;
+    }
+
+    .logout-btn {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid white;
+      padding: 8px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .section {
+      background: white;
+      border-radius: 8px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .section h2 {
+      color: #667eea;
+      margin-bottom: 20px;
+      font-size: 20px;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+
+    .form-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    @media (max-width: 768px) {
+      .form-group {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    input[type="text"],
+    input[type="password"],
+    select {
+      padding: 10px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 5px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .users-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
+    }
+
+    .user-card {
+      background: #f9f9f9;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .user-info-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-icon {
+      font-size: 24px;
+    }
+
+    .user-name {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .user-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .user-actions select {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .user-actions button {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .logs-container {
+      background: #1e1e1e;
+      color: #0f0;
+      padding: 15px;
+      border-radius: 5px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      line-height: 1.5;
+    }
+
+    .logs-container div {
+      padding: 2px 0;
+    }
+
+    .info-box {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    input[type="checkbox"] {
+      cursor: pointer;
+    }
+
+    label {
+      cursor: pointer;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .form-row > * {
+      flex: 1;
+      min-width: 150px;
+    }
   </style>
 </head>
 <body>
-  <h1>Gerenciamento do Servidor FTP (vsftpd)</h1>
+  <header>
+    <h1>🔐 FTP Management Dashboard</h1>
+    <div class="header-right">
+      <div class="user-info">👤 Logado como: <strong><%= username %></strong></div>
+      <a href="/logout" class="logout-btn">Sair</a>
+    </div>
+  </header>
 
-  <h2>Adicionar Usuário</h2>
-  <form action="/add-user" method="POST">
-    <input type="text" name="username" placeholder="Usuário" required>
-    <input type="password" name="password" placeholder="Senha" required>
-    <button type="submit">Adicionar</button>
-  </form>
+  <div class="container">
+    <!-- Add User Section -->
+    <div class="section">
+      <h2>➕ Adicionar Novo Usuário</h2>
+      <div class="info-box">
+        Crie um novo usuário FTP com as credenciais desejadas. O usuário será criado com acesso limitado ao seu diretório home.
+      </div>
+      <form method="POST" action="/add-user">
+        <div class="form-row">
+          <input type="text" name="username" placeholder="Nome de usuário" required>
+          <input type="password" name="password" placeholder="Senha" required>
+          <button type="submit">Criar Usuário</button>
+        </div>
+      </form>
+    </div>
 
-  <h2>Usuários Existentes</h2>
-  <ul class="users">
-    <% users.forEach(user => { %>
-      <li>
-        <%= user %>
-        <form action="/del-user" method="POST" style="display:inline;">
-          <input type="hidden" name="username" value="<%= user %>">
-          <select name="action">
-            <option value="--disable">Desativar</option>
-            <option value="--enable">Reativar</option>
-            <option value="--delete">Remover</option>
-          </select>
-          <label><input type="checkbox" name="removeHome" value="yes"> Remover home</label>
-          <button type="submit">Executar</button>
-        </form>
-      </li>
-    <% }) %>
-  </ul>
+    <!-- Users List Section -->
+    <div class="section">
+      <h2>👥 Usuários Existentes (<%= users.length %>)</h2>
+      <% if (users.length === 0) { %>
+        <div class="empty-state">
+          <div class="empty-state-icon">📭</div>
+          <p>Nenhum usuário FTP encontrado</p>
+        </div>
+      <% } else { %>
+        <div class="users-list">
+          <% users.forEach(user => { %>
+            <div class="user-card">
+              <div class="user-info-card">
+                <div class="user-icon">👤</div>
+                <div class="user-name"><%= user %></div>
+              </div>
+              <div class="user-actions">
+                <form method="POST" action="/del-user" style="display: flex; gap: 5px; align-items: center;">
+                  <input type="hidden" name="username" value="<%= user %>">
+                  <select name="action" required>
+                    <option value="--disable">Desativar</option>
+                    <option value="--enable">Reativar</option>
+                    <option value="--delete">Remover</option>
+                  </select>
+                  <div class="checkbox-group">
+                    <input type="checkbox" id="removeHome_<%= user %>" name="removeHome" value="yes">
+                    <label for="removeHome_<%= user %>" style="margin: 0;">Apagar home</label>
+                  </div>
+                  <button type="submit">Executar</button>
+                </form>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
 
-  <h2>Logs Recentes</h2>
-  <div class="logs">
-    <% logs.forEach(log => { %>
-      <div><%= log %></div>
-    <% }) %>
+    <!-- Logs Section -->
+    <div class="section">
+      <h2>📋 Logs Recentes do FTP</h2>
+      <div class="info-box">
+        Últimas 50 linhas do arquivo de log do vsftpd
+      </div>
+      <div class="logs-container">
+        <% logs.forEach(log => { %>
+          <div><%= log.substring(0, 150) %></div>
+        <% }) %>
+      </div>
+    </div>
   </div>
 </body>
 </html>
