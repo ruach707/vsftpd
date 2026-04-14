@@ -3,6 +3,7 @@ const session = require('express-session');
 const Docker = require('dockerode');
 const path = require('path');
 const bcrypt = require('bcryptjs');
+const fs = require('fs');
 
 const app = express();
 const docker = new Docker();
@@ -10,11 +11,29 @@ const docker = new Docker();
 // Credenciais padrão (senha hash para "admin123")
 const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD_HASH = bcrypt.hashSync('admin123', 10);
+const PASSWORD_FILE = '/tmp/admin_password.hash';
 
-// Environment variable for default password (can be changed on startup)
-let CURRENT_PASSWORD_HASH = process.env.ADMIN_PASSWORD ? 
-  bcrypt.hashSync(process.env.ADMIN_PASSWORD, 10) : 
-  ADMIN_PASSWORD_HASH;
+// Função para salvar e carregar senha
+function loadOrCreatePassword() {
+  if (process.env.ADMIN_PASSWORD) {
+    // Se definida via env var, usar e salvar
+    return bcrypt.hashSync(process.env.ADMIN_PASSWORD, 10);
+  }
+  
+  try {
+    // Tentar carregar do arquivo
+    if (fs.existsSync(PASSWORD_FILE)) {
+      const hash = fs.readFileSync(PASSWORD_FILE, 'utf8').trim();
+      return hash || ADMIN_PASSWORD_HASH;
+    }
+  } catch (err) {
+    console.log('Erro ao ler arquivo de senha:', err.message);
+  }
+  
+  return ADMIN_PASSWORD_HASH;
+}
+
+let CURRENT_PASSWORD_HASH = loadOrCreatePassword();
 
 // Session configuration
 app.use(session({
@@ -93,9 +112,9 @@ app.get('/logout', (req, res) => {
 // Dashboard route
 app.get('/', requireAuth, async (req, res) => {
   try {
-    // List FTP users from /etc/passwd (exclude system users)
-    const passwdOutput = await execInContainer("grep '/data' /etc/passwd | cut -d: -f1 | grep -v root");
-    const users = passwdOutput.trim().split('\n').filter(u => u && u !== 'root');
+    // List FTP users by checking /data directory (more reliable)
+    const usersOutput = await execInContainer('ls -1 /data 2>/dev/null || echo ""');
+    const users = usersOutput.trim().split('\n').filter(u => u && u !== '' && u !== 'root' && u !== 'admin');
 
     const logsOutput = await execInContainer('tail -50 /var/log/vsftpd/vsftpd.log 2>/dev/null || echo "No logs yet"');
     const logs = logsOutput.trim().split('\n').filter(l => l);
@@ -167,6 +186,15 @@ app.post('/change-password', requireAuth, (req, res) => {
 
   // Update password
   CURRENT_PASSWORD_HASH = bcrypt.hashSync(newPassword, 10);
+  
+  // Salvar no arquivo para persistência
+  try {
+    fs.writeFileSync(PASSWORD_FILE, CURRENT_PASSWORD_HASH, 'utf8');
+    console.log('Senha salva com sucesso');
+  } catch (err) {
+    console.log('Aviso: Não foi possível salvar a senha no arquivo:', err.message);
+  }
+  
   res.render('change-password', { 
     error: null,
     success: 'Senha alterada com sucesso! A nova senha será válida na próxima sessão.',
