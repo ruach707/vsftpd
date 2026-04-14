@@ -1,0 +1,14 @@
+{
+  "name": "vsftpd-frontend",
+  "version": "1.0.0",
+  "description": "Simple frontend for vsftpd management",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ejs": "^3.1.9",
+    "dockerode": "^4.0.2"
+  }
+}

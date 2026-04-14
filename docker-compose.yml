@@ -50,3 +50,16 @@ services:
     volumes:
       - ./data:/data
       - ./logs:/var/log/vsftpd
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vsftpd-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - ftp

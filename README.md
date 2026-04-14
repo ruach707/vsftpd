@@ -34,3 +34,14 @@ docker exec -it vsftpd del-ftp-user.sh alice --enable
 # remover (manter home) / remover e apagar home
 docker exec -it vsftpd del-ftp-user.sh alice --delete
 docker exec -it vsftpd del-ftp-user.sh alice --delete -r
+
+## Frontend Web
+
+Um frontend simples em Node.js/Express está disponível para gerenciamento via web sem login.
+
+Para usar:
+1. Suba os serviços: `docker-compose up -d`
+2. Acesse http://localhost:3000
+3. Adicione/remova usuários, visualize logs.
+
+O frontend usa Docker API para executar comandos no container vsftpd.

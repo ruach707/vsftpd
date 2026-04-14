@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerenciamento vsftpd</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1, h2 { color: #333; }
+    form { margin-bottom: 20px; }
+    input, button { padding: 8px; margin: 5px; }
+    .logs { background: #f4f4f4; padding: 10px; max-height: 300px; overflow-y: scroll; }
+    .users { list-style: none; padding: 0; }
+    .users li { background: #e9e9e9; margin: 5px 0; padding: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Gerenciamento do Servidor FTP (vsftpd)</h1>
+
+  <h2>Adicionar Usuário</h2>
+  <form action="/add-user" method="POST">
+    <input type="text" name="username" placeholder="Usuário" required>
+    <input type="password" name="password" placeholder="Senha" required>
+    <button type="submit">Adicionar</button>
+  </form>
+
+  <h2>Usuários Existentes</h2>
+  <ul class="users">
+    <% users.forEach(user => { %>
+      <li>
+        <%= user %>
+        <form action="/del-user" method="POST" style="display:inline;">
+          <input type="hidden" name="username" value="<%= user %>">
+          <select name="action">
+            <option value="--disable">Desativar</option>
+            <option value="--enable">Reativar</option>
+            <option value="--delete">Remover</option>
+          </select>
+          <label><input type="checkbox" name="removeHome" value="yes"> Remover home</label>
+          <button type="submit">Executar</button>
+        </form>
+      </li>
+    <% }) %>
+  </ul>
+
+  <h2>Logs Recentes</h2>
+  <div class="logs">
+    <% logs.forEach(log => { %>
+      <div><%= log %></div>
+    <% }) %>
+  </div>
+</body>
+</html>
