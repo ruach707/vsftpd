@@ -1,9 +1,6 @@
 services:
   ftp:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: z3tech/vsftpd:latest
+    image: ruach707/vsftpd:latest
     container_name: vsftpd
     restart: unless-stopped
     environment:

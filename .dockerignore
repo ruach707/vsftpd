@@ -6,3 +6,10 @@
 *.zip
 *.tar
 *.tar.gz
+.github
+docker-compose.yml
+README.md
+frontend/
+.env.local
+node_modules/
+
