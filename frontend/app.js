@@ -11,6 +11,11 @@ const docker = new Docker();
 const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD_HASH = bcrypt.hashSync('admin123', 10);
 
+// Environment variable for default password (can be changed on startup)
+let CURRENT_PASSWORD_HASH = process.env.ADMIN_PASSWORD ? 
+  bcrypt.hashSync(process.env.ADMIN_PASSWORD, 10) : 
+  ADMIN_PASSWORD_HASH;
+
 // Session configuration
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
@@ -70,7 +75,7 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
   
-  if (username === ADMIN_USERNAME && bcrypt.compareSync(password, ADMIN_PASSWORD_HASH)) {
+  if (username === ADMIN_USERNAME && bcrypt.compareSync(password, CURRENT_PASSWORD_HASH)) {
     req.session.authenticated = true;
     req.session.username = username;
     res.redirect('/');
@@ -88,11 +93,12 @@ app.get('/logout', (req, res) => {
 // Dashboard route
 app.get('/', requireAuth, async (req, res) => {
   try {
-    const usersOutput = await execInContainer('ls -1 /data');
-    const users = usersOutput.trim().split('\n').filter(u => u);
+    // List FTP users from /etc/passwd (exclude system users)
+    const passwdOutput = await execInContainer("grep '/data' /etc/passwd | cut -d: -f1 | grep -v root");
+    const users = passwdOutput.trim().split('\n').filter(u => u && u !== 'root');
 
-    const logsOutput = await execInContainer('tail -50 /var/log/vsftpd/vsftpd.log');
-    const logs = logsOutput.trim().split('\n');
+    const logsOutput = await execInContainer('tail -50 /var/log/vsftpd/vsftpd.log 2>/dev/null || echo "No logs yet"');
+    const logs = logsOutput.trim().split('\n').filter(l => l);
 
     res.render('index', { users, logs, username: req.session.username });
   } catch (err) {
@@ -122,6 +128,50 @@ app.post('/del-user', requireAuth, async (req, res) => {
   } catch (err) {
     res.send('Error: ' + err.message);
   }
+});
+
+// Change password route
+app.get('/change-password', requireAuth, (req, res) => {
+  res.render('change-password', { error: null, success: null, username: req.session.username });
+});
+
+app.post('/change-password', requireAuth, (req, res) => {
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+
+  // Validate current password
+  if (!bcrypt.compareSync(currentPassword, CURRENT_PASSWORD_HASH)) {
+    return res.render('change-password', { 
+      error: 'Senha atual incorreta',
+      success: null,
+      username: req.session.username
+    });
+  }
+
+  // Validate new passwords match
+  if (newPassword !== confirmPassword) {
+    return res.render('change-password', { 
+      error: 'Senhas novas não conferem',
+      success: null,
+      username: req.session.username
+    });
+  }
+
+  // Validate password strength
+  if (newPassword.length < 6) {
+    return res.render('change-password', { 
+      error: 'Senha deve ter no mínimo 6 caracteres',
+      success: null,
+      username: req.session.username
+    });
+  }
+
+  // Update password
+  CURRENT_PASSWORD_HASH = bcrypt.hashSync(newPassword, 10);
+  res.render('change-password', { 
+    error: null,
+    success: 'Senha alterada com sucesso! A nova senha será válida na próxima sessão.',
+    username: req.session.username
+  });
 });
 
 app.listen(3000, () => {
