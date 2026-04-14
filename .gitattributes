@@ -1,0 +1,7 @@
+# Git line ending normalization
+* text=auto
+*.sh eol=lf
+Dockerfile eol=lf
+entrypoint.sh eol=lf
+*.conf eol=lf
+*.tmpl eol=lf
