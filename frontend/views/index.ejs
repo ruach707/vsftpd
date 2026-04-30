@@ -588,20 +588,25 @@
   }
 
   // ── Nova Senha ────────────────────────────────────────────
+  // currentResetUser guarda o usuário alvo para evitar passar pelo onclick
+  let currentResetUser = '';
+
   function openResetPwd(user) {
+    currentResetUser = user;
     document.getElementById('reset-title').textContent = 'Nova Senha — ' + escHtml(user);
     document.getElementById('reset-body').innerHTML =
       '<p style="font-size:14px;margin-bottom:16px">Para gerar uma nova senha para <strong>' + escHtml(user) + '</strong>, confirme a senha mestra:</p>' +
       '<input type="password" id="master-pwd-input" placeholder="Senha mestra" autocomplete="current-password"' +
         ' style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:7px;font-size:14px;margin-bottom:10px;box-sizing:border-box"' +
-        ' onkeydown="if(event.key===\'Enter\')confirmResetPwd(' + JSON.stringify(user) + ')">' +
+        ' onkeydown="if(event.key===\'Enter\')confirmResetPwd()">' +
       '<div id="master-pwd-error" style="color:var(--danger);font-size:13px;min-height:18px;margin-bottom:8px"></div>' +
-      '<button class="btn btn-warning" style="width:100%" onclick="confirmResetPwd(' + JSON.stringify(user) + ')">Confirmar e Gerar Nova Senha</button>';
+      '<button class="btn btn-warning" style="width:100%" onclick="confirmResetPwd()">Confirmar e Gerar Nova Senha</button>';
     openModal('modal-reset');
     setTimeout(() => { const el = document.getElementById('master-pwd-input'); if (el) el.focus(); }, 80);
   }
 
-  function confirmResetPwd(user) {
+  function confirmResetPwd() {
+    const user = currentResetUser;
     const input = document.getElementById('master-pwd-input');
     const masterPassword = input ? input.value : '';
     if (!masterPassword) {
@@ -622,7 +627,7 @@
         if (!d.success) {
           document.getElementById('reset-body').innerHTML =
             '<p style="color:var(--danger);text-align:center;font-size:14px;margin-bottom:16px">' + escHtml(d.error || 'Erro desconhecido') + '</p>' +
-            '<div style="text-align:center"><button class="btn btn-ghost btn-sm" onclick="openResetPwd(' + JSON.stringify(user) + ')">Tentar novamente</button></div>';
+            '<div style="text-align:center"><button class="btn btn-ghost btn-sm" onclick="openResetPwd(currentResetUser)">Tentar novamente</button></div>';
           return;
         }
         document.getElementById('reset-body').innerHTML =
