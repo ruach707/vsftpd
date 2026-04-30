@@ -55,14 +55,30 @@ err "Usuário não existe: $USER"
 fi
 
 
+PERSIST_FILE="$FTP_ROOT/.ftp_users"
+
 case "$ACTION" in
 --disable)
 usermod -L "$USER"
 msg "Login desativado (locked) para: $USER"
+# Atualiza hash (já inclui o prefixo ! do lock)
+HASH=$(getent shadow "$USER" | cut -d: -f2)
+if [ -n "$HASH" ] && [ -f "$PERSIST_FILE" ]; then
+  grep -v "^${USER}:" "$PERSIST_FILE" > "${PERSIST_FILE}.tmp" || true
+  echo "${USER}:${HASH}" >> "${PERSIST_FILE}.tmp"
+  mv "${PERSIST_FILE}.tmp" "$PERSIST_FILE"
+fi
 ;;
 --enable)
 usermod -U "$USER"
 msg "Login reativado (unlocked) para: $USER"
+# Atualiza hash (remove o prefixo ! do lock)
+HASH=$(getent shadow "$USER" | cut -d: -f2)
+if [ -n "$HASH" ] && [ -f "$PERSIST_FILE" ]; then
+  grep -v "^${USER}:" "$PERSIST_FILE" > "${PERSIST_FILE}.tmp" || true
+  echo "${USER}:${HASH}" >> "${PERSIST_FILE}.tmp"
+  mv "${PERSIST_FILE}.tmp" "$PERSIST_FILE"
+fi
 ;;
 --delete)
 if [[ "$REMOVE_HOME" == "yes" ]]; then
@@ -71,6 +87,11 @@ msg "Usuário removido com home: $USER"
 else
 userdel "$USER"
 msg "Usuário removido (home mantido): $USER"
+fi
+# Remove da persistência
+if [ -f "$PERSIST_FILE" ]; then
+  grep -v "^${USER}:" "$PERSIST_FILE" > "${PERSIST_FILE}.tmp" || true
+  mv "${PERSIST_FILE}.tmp" "$PERSIST_FILE"
 fi
 ;;
 *)

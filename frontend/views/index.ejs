@@ -5,311 +5,671 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FTP Management Dashboard</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --primary: #667eea;
+      --primary-dark: #764ba2;
+      --success: #27ae60;
+      --warning: #e67e22;
+      --danger: #e74c3c;
+      --info: #2980b9;
+      --bg: #f0f2f5;
+      --card-bg: #fff;
+      --border: #e8eaf0;
+      --text: #2c3e50;
+      --text-light: #7f8c8d;
     }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f5f5f5;
-      color: #333;
+      background: var(--bg);
+      color: var(--text);
     }
 
+    /* ── Header ── */
     header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
       color: white;
-      padding: 20px 40px;
+      padding: 16px 32px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
-    header h1 {
-      font-size: 24px;
-    }
+    header h1 { font-size: 20px; font-weight: 600; letter-spacing: 0.3px; }
 
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .header-right span { font-size: 13px; opacity: 0.85; }
 
-    .user-info {
-      font-size: 14px;
-    }
-
-    .logout-btn {
-      background: rgba(255, 255, 255, 0.2);
+    .header-btn {
+      background: rgba(255,255,255,0.15);
       color: white;
-      border: 1px solid white;
-      padding: 8px 16px;
-      border-radius: 5px;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 7px 14px;
+      border-radius: 6px;
       cursor: pointer;
       text-decoration: none;
-      font-size: 14px;
-      transition: background 0.3s;
+      font-size: 13px;
+      transition: background 0.2s;
     }
+    .header-btn:hover { background: rgba(255,255,255,0.25); }
 
-    .logout-btn:hover {
-      background: rgba(255, 255, 255, 0.3);
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 40px 20px;
-    }
+    /* ── Layout ── */
+    .container { max-width: 1280px; margin: 0 auto; padding: 28px 20px; }
 
     .section {
-      background: white;
-      border-radius: 8px;
-      padding: 30px;
-      margin-bottom: 30px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      background: var(--card-bg);
+      border-radius: 10px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
     }
 
-    .section h2 {
-      color: #667eea;
-      margin-bottom: 20px;
-      font-size: 20px;
-      border-bottom: 2px solid #667eea;
-      padding-bottom: 10px;
-    }
-
-    .form-group {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 15px;
-      margin-bottom: 15px;
-    }
-
-    @media (max-width: 768px) {
-      .form-group {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    input[type="text"],
-    input[type="password"],
-    select {
-      padding: 10px 15px;
-      border: 2px solid #e0e0e0;
-      border-radius: 5px;
-      font-size: 14px;
-      transition: border-color 0.3s;
-    }
-
-    input[type="text"]:focus,
-    input[type="password"]:focus,
-    select:focus {
-      outline: none;
-      border-color: #667eea;
-    }
-
-    button {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 5px;
-      cursor: pointer;
+    .section-title {
+      font-size: 15px;
       font-weight: 600;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-    }
-
-    .users-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 15px;
-    }
-
-    .user-card {
-      background: #f9f9f9;
-      border-left: 4px solid #667eea;
-      padding: 15px;
-      border-radius: 5px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .user-info-card {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .user-icon {
-      font-size: 24px;
-    }
-
-    .user-name {
-      font-weight: 600;
-      color: #333;
-    }
-
-    .user-actions {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .user-actions select {
-      padding: 6px 10px;
-      font-size: 12px;
-    }
-
-    .user-actions button {
-      padding: 6px 12px;
-      font-size: 12px;
-    }
-
-    .logs-container {
-      background: #1e1e1e;
-      color: #0f0;
-      padding: 15px;
-      border-radius: 5px;
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-      max-height: 400px;
-      overflow-y: auto;
-      line-height: 1.5;
-    }
-
-    .logs-container div {
-      padding: 2px 0;
-    }
-
-    .info-box {
-      background: #e3f2fd;
-      border-left: 4px solid #2196f3;
-      padding: 15px;
-      border-radius: 5px;
-      margin-bottom: 20px;
-      font-size: 14px;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: #999;
-    }
-
-    .empty-state-icon {
-      font-size: 48px;
-      margin-bottom: 15px;
-    }
-
-    .checkbox-group {
+      color: var(--text);
+      margin-bottom: 16px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
-
-    input[type="checkbox"] {
-      cursor: pointer;
+    .section-title .count {
+      background: var(--primary);
+      color: white;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
     }
 
-    label {
-      cursor: pointer;
-    }
-
-    .form-row {
+    /* ── Add User Form ── */
+    .add-form {
       display: flex;
-      gap: 15px;
-      margin-bottom: 15px;
+      gap: 12px;
+      align-items: center;
       flex-wrap: wrap;
     }
 
-    .form-row > * {
+    .add-form input {
       flex: 1;
-      min-width: 150px;
+      min-width: 160px;
+      padding: 10px 14px;
+      border: 2px solid var(--border);
+      border-radius: 7px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    .add-form input:focus { outline: none; border-color: var(--primary); }
+
+    .btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary  { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; }
+    .btn-info     { background: var(--info);    color: white; }
+    .btn-success  { background: var(--success); color: white; }
+    .btn-warning  { background: var(--warning); color: white; }
+    .btn-danger   { background: var(--danger);  color: white; }
+    .btn-ghost    { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
+    .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+
+    /* ── Users Grid ── */
+    .users-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    .user-card {
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      overflow: hidden;
+      transition: box-shadow 0.2s, border-color 0.2s;
+      background: var(--card-bg);
+    }
+    .user-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.09); border-color: #c5c9e0; }
+
+    .card-header {
+      padding: 14px 16px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-username {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text);
+      letter-spacing: 0.2px;
+    }
+
+    .status-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 12px;
+      background: #ecf0f1;
+      color: var(--text-light);
+    }
+    .status-badge.active  { background: #d5f5e3; color: #1e8449; }
+    .status-badge.locked  { background: #fdecea; color: #c0392b; }
+
+    .card-actions {
+      padding: 12px 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    /* ── Empty state ── */
+    .empty-state { text-align: center; padding: 48px; color: var(--text-light); }
+    .empty-state p { margin-top: 12px; font-size: 15px; }
+
+    /* ── Logs ── */
+    .logs-box {
+      background: #1a1d23;
+      color: #a8e6a3;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 360px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+    .logs-box .log-empty { color: #555; font-style: italic; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: white;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      margin: 16px;
+    }
+
+    .modal-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h3 { font-size: 16px; font-weight: 700; }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      color: var(--text-light);
+      line-height: 1;
+      padding: 0 4px;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    .modal-body { padding: 20px 24px; }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f5f5f5;
+      font-size: 14px;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { color: var(--text-light); font-weight: 500; }
+    .detail-value { font-weight: 600; }
+
+    .file-list { margin-top: 12px; }
+    .file-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 7px 10px;
+      background: #f8f9fa;
+      border-radius: 5px;
+      margin-bottom: 5px;
+      font-size: 13px;
+    }
+    .file-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 280px; }
+    .file-meta { color: var(--text-light); font-size: 12px; white-space: nowrap; margin-left: 8px; }
+
+    .subsection-title { font-weight: 600; font-size: 13px; color: var(--text-light); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .log-entries { background: #1a1d23; border-radius: 6px; padding: 10px 12px; }
+    .log-entries p { color: #a8e6a3; font-family: monospace; font-size: 12px; line-height: 1.6; }
+    .log-entries .no-log { color: #555; font-style: italic; }
+
+    /* ── Password reset result ── */
+    .pwd-display {
+      background: #f0f4ff;
+      border: 2px dashed var(--primary);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      margin: 16px 0;
+    }
+    .pwd-display .pwd-value {
+      font-family: 'Courier New', monospace;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      letter-spacing: 2px;
+      word-break: break-all;
+    }
+    .pwd-warn { color: var(--warning); font-size: 12px; margin-top: 8px; }
+
+    /* ── Delete confirm ── */
+    .delete-options { margin: 16px 0; }
+    .delete-options label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; padding: 6px 0; }
+    .delete-options input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+    .delete-warn { background: #fef9f0; border-left: 3px solid var(--warning); padding: 10px 14px; border-radius: 4px; font-size: 13px; color: #7d5a00; margin-top: 12px; }
+
+    .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+
+    /* ── Loading spinner ── */
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #ddd; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .dl-link {
+      color: var(--info);
+      font-weight: 600;
+      text-decoration: none;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--info);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .dl-link:hover { background: var(--info); color: white; }
+
+    @media (max-width: 600px) {
+      header { padding: 12px 16px; }
+      .container { padding: 16px 12px; }
+      .add-form { flex-direction: column; }
+      .add-form input, .add-form button { width: 100%; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>🔐 FTP Management Dashboard</h1>
-    <div class="header-right">
-      <div class="user-info">👤 Logado como: <strong><%= username %></strong></div>
-      <a href="/change-password" class="logout-btn" style="background: rgba(255, 200, 100, 0.3); border-color: rgba(255, 200, 100, 0.5);">🔑 Trocar Senha</a>
-      <a href="/logout" class="logout-btn">Sair</a>
-    </div>
-  </header>
 
-  <div class="container">
-    <!-- Add User Section -->
-    <div class="section">
-      <h2>➕ Adicionar Novo Usuário</h2>
-      <div class="info-box">
-        Crie um novo usuário FTP com as credenciais desejadas. O usuário será criado com acesso limitado ao seu diretório home.
+<header>
+  <h1>FTP Management</h1>
+  <div class="header-right">
+    <span>Logado como <strong><%= username %></strong></span>
+    <a href="/change-password" class="header-btn">Trocar Senha</a>
+    <a href="/logout" class="header-btn">Sair</a>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Add User -->
+  <div class="section">
+    <div class="section-title">Novo Usuário FTP</div>
+    <form id="add-user-form" class="add-form">
+      <input type="text" id="new-username" placeholder="Nome de usuário" required
+        pattern="[a-zA-Z0-9_][a-zA-Z0-9_.\-]{0,31}"
+        title="Apenas letras, números, _ . - (máx. 32 caracteres)">
+      <button type="submit" class="btn btn-primary">Criar Usuário</button>
+    </form>
+  </div>
+
+  <!-- Users List -->
+  <div class="section">
+    <div class="section-title">
+      Usuários Existentes
+      <span class="count"><%= users.length %></span>
+    </div>
+
+    <% if (users.length === 0) { %>
+      <div class="empty-state">
+        <p>Nenhum usuário FTP encontrado.</p>
       </div>
-      <form method="POST" action="/add-user">
-        <div class="form-row">
-          <input type="text" name="username" placeholder="Nome de usuário" required>
-          <input type="password" name="password" placeholder="Senha" required>
-          <button type="submit">Criar Usuário</button>
-        </div>
-      </form>
-    </div>
-
-    <!-- Users List Section -->
-    <div class="section">
-      <h2>👥 Usuários Existentes (<%= users.length %>)</h2>
-      <% if (users.length === 0) { %>
-        <div class="empty-state">
-          <div class="empty-state-icon">📭</div>
-          <p>Nenhum usuário FTP encontrado</p>
-        </div>
-      <% } else { %>
-        <div class="users-list">
-          <% users.forEach(user => { %>
-            <div class="user-card">
-              <div class="user-info-card">
-                <div class="user-icon">👤</div>
-                <div class="user-name"><%= user %></div>
-              </div>
-              <div class="user-actions">
-                <form method="POST" action="/del-user" style="display: flex; gap: 5px; align-items: center;">
-                  <input type="hidden" name="username" value="<%= user %>">
-                  <select name="action" required>
-                    <option value="--disable">Desativar</option>
-                    <option value="--enable">Reativar</option>
-                    <option value="--delete">Remover</option>
-                  </select>
-                  <div class="checkbox-group">
-                    <input type="checkbox" id="removeHome_<%= user %>" name="removeHome" value="yes">
-                    <label for="removeHome_<%= user %>" style="margin: 0;">Apagar home</label>
-                  </div>
-                  <button type="submit">Executar</button>
-                </form>
-              </div>
+    <% } else { %>
+      <div class="users-grid">
+        <% users.forEach(user => { %>
+          <div class="user-card" id="card-<%= user %>">
+            <div class="card-header">
+              <span class="card-username"><%= user %></span>
+              <span class="status-badge" id="badge-<%= user %>"><span class="spinner"></span></span>
             </div>
-          <% }) %>
-        </div>
-      <% } %>
-    </div>
-
-    <!-- Logs Section -->
-    <div class="section">
-      <h2>📋 Logs Recentes do FTP</h2>
-      <div class="info-box">
-        Últimas 50 linhas do arquivo de log do vsftpd
-      </div>
-      <div class="logs-container">
-        <% logs.forEach(log => { %>
-          <div><%= log.substring(0, 150) %></div>
+            <div class="card-actions">
+              <button class="btn btn-ghost btn-sm" onclick="showDetails('<%= user %>')">Detalhes</button>
+              <button class="btn btn-info btn-sm" onclick="openResetPwd('<%= user %>')">Nova Senha</button>
+              <button class="btn btn-sm" id="btn-toggle-<%= user %>"
+                onclick="doToggle('<%= user %>')" disabled>—</button>
+              <button class="btn btn-danger btn-sm" onclick="openDelete('<%= user %>')">Excluir</button>
+            </div>
+          </div>
         <% }) %>
       </div>
+    <% } %>
+  </div>
+
+  <!-- Logs -->
+  <div class="section">
+    <div class="section-title">Logs Recentes do FTP</div>
+    <div class="logs-box">
+      <% if (logs.length === 0 || (logs.length === 1 && logs[0].includes('No logs'))) { %>
+        <span class="log-empty">Nenhum log disponível ainda.</span>
+      <% } else { %>
+        <% logs.forEach(log => { %><div><%= log.substring(0, 200) %></div><% }) %>
+      <% } %>
     </div>
   </div>
+
+</div>
+
+<!-- ══ Modal: Detalhes ══ -->
+<div class="modal-overlay" id="modal-details">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="details-title">Detalhes do Usuário</h3>
+      <button class="modal-close" onclick="closeModal('modal-details')">&times;</button>
+    </div>
+    <div class="modal-body" id="details-body">
+      <div style="text-align:center;padding:24px"><span class="spinner" style="width:28px;height:28px;border-width:3px"></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal: Nova Senha ══ -->
+<div class="modal-overlay" id="modal-reset">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="reset-title">Redefinir Senha</h3>
+      <button class="modal-close" onclick="closeModal('modal-reset')">&times;</button>
+    </div>
+    <div class="modal-body" id="reset-body">
+      <div style="text-align:center;padding:24px"><span class="spinner" style="width:28px;height:28px;border-width:3px"></span></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-reset')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal: Confirmar Exclusão ══ -->
+<div class="modal-overlay" id="modal-delete">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Excluir Usuário</h3>
+      <button class="modal-close" onclick="closeModal('modal-delete')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>Tem certeza que deseja excluir o usuário <strong id="delete-username-label"></strong>?</p>
+      <div class="delete-options">
+        <label>
+          <input type="checkbox" id="delete-remove-home">
+          Apagar também o diretório home (todos os arquivos serão perdidos)
+        </label>
+      </div>
+      <div class="delete-warn" id="delete-home-warn" style="display:none">
+        Atenção: esta ação é irreversível. Todos os arquivos do usuário serão apagados permanentemente.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-delete')">Cancelar</button>
+      <form method="POST" action="/del-user" id="delete-form" style="display:inline">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="action" value="--delete">
+        <input type="hidden" name="username" id="delete-form-user">
+        <input type="hidden" name="removeHome" id="delete-form-home" value="">
+        <button type="submit" class="btn btn-danger btn-sm">Confirmar Exclusão</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Form oculto para disable/enable ══ -->
+<form method="POST" action="/del-user" id="toggle-form" style="display:none">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="username" id="toggle-form-user">
+  <input type="hidden" name="action" id="toggle-form-action">
+</form>
+
+<script>
+  const CSRF_TOKEN = '<%= csrfToken %>';
+
+  // ── Criar usuário (senha auto-gerada) ────────────────────
+  document.getElementById('add-user-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const username = document.getElementById('new-username').value.trim();
+    if (!username) return;
+
+    document.getElementById('reset-title').textContent = 'Criando usuário — ' + username;
+    document.getElementById('reset-body').innerHTML =
+      '<div style="text-align:center;padding:24px"><span class="spinner" style="width:28px;height:28px;border-width:3px"></span></div>';
+    openModal('modal-reset');
+
+    fetch('/add-user-generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-csrf-token': CSRF_TOKEN },
+      body: JSON.stringify({ username })
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (!d.success) {
+          document.getElementById('reset-body').innerHTML =
+            '<p style="color:var(--danger)">' + escHtml(d.error || 'Erro desconhecido') + '</p>';
+          return;
+        }
+        document.getElementById('reset-body').innerHTML =
+          '<p style="font-size:14px;margin-bottom:4px">Usuário <strong>' + escHtml(d.username) + '</strong> criado com sucesso.</p>' +
+          '<div class="pwd-display">' +
+            '<div class="pwd-value" id="new-pwd-val">' + escHtml(d.password) + '</div>' +
+            '<button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="copyPwd()">Copiar Senha</button>' +
+          '</div>' +
+          '<p class="pwd-warn">Anote agora — esta senha não será exibida novamente.</p>' +
+          '<div style="text-align:center;margin-top:16px">' +
+            '<button class="btn btn-ghost btn-sm" onclick="closeModal(\'modal-reset\');location.reload()">Fechar e Atualizar Lista</button>' +
+          '</div>';
+        document.getElementById('new-username').value = '';
+      })
+      .catch(() => {
+        document.getElementById('reset-body').innerHTML =
+          '<p style="color:var(--danger)">Erro ao criar usuário.</p>';
+      });
+  });
+
+  // ── Status assíncrono ──────────────────────────────────────
+  let userStatuses = {};
+
+  fetch('/users-status')
+    .then(r => r.json())
+    .then(data => {
+      userStatuses = data;
+      Object.entries(data).forEach(([user, status]) => {
+        const badge = document.getElementById('badge-' + user);
+        const btn   = document.getElementById('btn-toggle-' + user);
+        if (!badge || !btn) return;
+
+        if (status === 'locked') {
+          badge.textContent = 'Desativado';
+          badge.className = 'status-badge locked';
+          btn.textContent = 'Reativar';
+          btn.className = 'btn btn-success btn-sm';
+        } else {
+          badge.textContent = 'Ativo';
+          badge.className = 'status-badge active';
+          btn.textContent = 'Desativar';
+          btn.className = 'btn btn-warning btn-sm';
+        }
+        btn.disabled = false;
+      });
+    })
+    .catch(() => {
+      document.querySelectorAll('.status-badge').forEach(b => { b.textContent = '?'; });
+    });
+
+  // ── Toggle Ativar/Desativar ───────────────────────────────
+  function doToggle(user) {
+    const action = (userStatuses[user] === 'locked') ? '--enable' : '--disable';
+    document.getElementById('toggle-form-user').value   = user;
+    document.getElementById('toggle-form-action').value = action;
+    document.getElementById('toggle-form').submit();
+  }
+
+  // ── Detalhes ─────────────────────────────────────────────
+  function showDetails(user) {
+    document.getElementById('details-title').textContent = 'Detalhes — ' + user;
+    document.getElementById('details-body').innerHTML =
+      '<div style="text-align:center;padding:24px"><span class="spinner" style="width:28px;height:28px;border-width:3px"></span></div>';
+    openModal('modal-details');
+
+    fetch('/user-details/' + encodeURIComponent(user))
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) { document.getElementById('details-body').innerHTML = '<p style="color:red">' + d.error + '</p>'; return; }
+
+        const statusHtml = d.locked
+          ? '<span class="status-badge locked">Desativado</span>'
+          : '<span class="status-badge active">Ativo</span>';
+
+        const filesHtml = d.files.length === 0
+          ? '<p style="color:#999;font-size:13px">Nenhum arquivo encontrado.</p>'
+          : d.files.map(f =>
+              '<div class="file-item">' +
+              '<span class="file-name">' + escHtml(f.name) + '</span>' +
+              '<span class="file-meta">' +
+                escHtml(f.size) + ' &nbsp; ' + escHtml(f.date) +
+                ' &nbsp; <a href="/download?user=' + encodeURIComponent(user) +
+                '&file=' + encodeURIComponent(f.name) +
+                '" class="dl-link">baixar</a>' +
+              '</span>' +
+              '</div>'
+            ).join('');
+
+        const logsHtml = d.lastLogs.length === 0
+          ? '<p class="no-log">Sem registros no log para este usuário.</p>'
+          : d.lastLogs.map(l => '<p>' + escHtml(l.substring(0, 180)) + '</p>').join('');
+
+        document.getElementById('details-body').innerHTML =
+          '<div class="detail-row"><span class="detail-label">Usuário</span><span class="detail-value">' + escHtml(d.user) + '</span></div>' +
+          '<div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">' + statusHtml + '</span></div>' +
+          '<div class="detail-row"><span class="detail-label">Espaço em disco</span><span class="detail-value">' + escHtml(d.diskUsage) + '</span></div>' +
+          '<div class="subsection-title">Arquivos Recentes</div>' +
+          '<div class="file-list">' + filesHtml + '</div>' +
+          '<div class="subsection-title">Últimas Atividades (Log)</div>' +
+          '<div class="log-entries">' + logsHtml + '</div>';
+      })
+      .catch(err => {
+        document.getElementById('details-body').innerHTML = '<p style="color:red">Erro ao carregar detalhes.</p>';
+      });
+  }
+
+  // ── Nova Senha ────────────────────────────────────────────
+  function openResetPwd(user) {
+    document.getElementById('reset-title').textContent = 'Nova Senha — ' + escHtml(user);
+    document.getElementById('reset-body').innerHTML =
+      '<p style="font-size:14px;margin-bottom:16px">Para gerar uma nova senha para <strong>' + escHtml(user) + '</strong>, confirme a senha mestra:</p>' +
+      '<input type="password" id="master-pwd-input" placeholder="Senha mestra" autocomplete="current-password"' +
+        ' style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:7px;font-size:14px;margin-bottom:10px;box-sizing:border-box"' +
+        ' onkeydown="if(event.key===\'Enter\')confirmResetPwd(' + JSON.stringify(user) + ')">' +
+      '<div id="master-pwd-error" style="color:var(--danger);font-size:13px;min-height:18px;margin-bottom:8px"></div>' +
+      '<button class="btn btn-warning" style="width:100%" onclick="confirmResetPwd(' + JSON.stringify(user) + ')">Confirmar e Gerar Nova Senha</button>';
+    openModal('modal-reset');
+    setTimeout(() => { const el = document.getElementById('master-pwd-input'); if (el) el.focus(); }, 80);
+  }
+
+  function confirmResetPwd(user) {
+    const input = document.getElementById('master-pwd-input');
+    const masterPassword = input ? input.value : '';
+    if (!masterPassword) {
+      document.getElementById('master-pwd-error').textContent = 'Informe a senha mestra.';
+      return;
+    }
+
+    document.getElementById('reset-body').innerHTML =
+      '<div style="text-align:center;padding:24px"><span class="spinner" style="width:28px;height:28px;border-width:3px"></span></div>';
+
+    fetch('/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-csrf-token': CSRF_TOKEN },
+      body: JSON.stringify({ username: user, masterPassword })
+    })
+      .then(r => r.json())
+      .then(d => {
+        if (!d.success) {
+          document.getElementById('reset-body').innerHTML =
+            '<p style="color:var(--danger);text-align:center;font-size:14px;margin-bottom:16px">' + escHtml(d.error || 'Erro desconhecido') + '</p>' +
+            '<div style="text-align:center"><button class="btn btn-ghost btn-sm" onclick="openResetPwd(' + JSON.stringify(user) + ')">Tentar novamente</button></div>';
+          return;
+        }
+        document.getElementById('reset-body').innerHTML =
+          '<p style="font-size:14px">Nova senha gerada para <strong>' + escHtml(d.username) + '</strong>:</p>' +
+          '<div class="pwd-display">' +
+            '<div class="pwd-value" id="new-pwd-val">' + escHtml(d.password) + '</div>' +
+            '<button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="copyPwd()">Copiar Senha</button>' +
+          '</div>' +
+          '<p class="pwd-warn">Anote agora — esta senha não será exibida novamente.</p>';
+      })
+      .catch(() => {
+        document.getElementById('reset-body').innerHTML = '<p style="color:var(--danger)">Erro ao redefinir senha.</p>';
+      });
+  }
+
+  function copyPwd() {
+    const val = document.getElementById('new-pwd-val').textContent;
+    navigator.clipboard.writeText(val).then(() => alert('Senha copiada!'));
+  }
+
+  // ── Excluir ───────────────────────────────────────────────
+  function openDelete(user) {
+    document.getElementById('delete-username-label').textContent = user;
+    document.getElementById('delete-form-user').value = user;
+    document.getElementById('delete-remove-home').checked = false;
+    document.getElementById('delete-form-home').value = '';
+    document.getElementById('delete-home-warn').style.display = 'none';
+    openModal('modal-delete');
+  }
+
+  document.getElementById('delete-remove-home').addEventListener('change', function() {
+    document.getElementById('delete-form-home').value = this.checked ? 'yes' : '';
+    document.getElementById('delete-home-warn').style.display = this.checked ? 'block' : 'none';
+  });
+
+  // ── Helpers ───────────────────────────────────────────────
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+  });
+
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+
 </body>
 </html>

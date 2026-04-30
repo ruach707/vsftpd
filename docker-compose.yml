@@ -4,7 +4,7 @@ services:
     container_name: vsftpd
     restart: unless-stopped
     environment:
-      - FTP_USERS=admin:admin123
+      - FTP_USERS=admin:${FTP_PASS}
       - FTP_ROOT=/data
       - PUID=1000
       - PGID=1000
@@ -52,9 +52,13 @@ services:
     image: ruach707/vsftpd-frontend:latest
     container_name: vsftpd-frontend
     restart: unless-stopped
+    environment:
+      - ADMIN_PASSWORD=${ADMIN_PASS}
+      - SESSION_SECRET=${SESSION_SECRET}
     ports:
       - "3000:3000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./frontend_data:/app/data
     depends_on:
       - ftp

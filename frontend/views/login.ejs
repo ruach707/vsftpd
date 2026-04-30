@@ -138,6 +138,7 @@
     <% } %>
 
     <form method="POST" action="/login">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="form-group">
         <label for="username">Usuário</label>
         <input type="text" id="username" name="username" placeholder="admin" required autofocus>
@@ -151,11 +152,6 @@
       <button type="submit">Entrar</button>
     </form>
 
-    <div class="login-info">
-      <strong>Credenciais Padrão:</strong><br>
-      Usuário: admin<br>
-      Senha: admin123
-    </div>
   </div>
 </body>
 </html>

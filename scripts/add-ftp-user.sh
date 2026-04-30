@@ -54,5 +54,14 @@ msg "Usuário criado: $USER"
 fi
 
 
+# ---- Persistir usuário para sobreviver a restarts ----
+PERSIST_FILE="$FTP_ROOT/.ftp_users"
+HASH=$(getent shadow "$USER" | cut -d: -f2)
+if [ -n "$HASH" ]; then
+  grep -v "^${USER}:" "$PERSIST_FILE" 2>/dev/null > "${PERSIST_FILE}.tmp" || true
+  echo "${USER}:${HASH}" >> "${PERSIST_FILE}.tmp"
+  mv "${PERSIST_FILE}.tmp" "$PERSIST_FILE"
+fi
+
 msg "Home: $USER_HOME"
 msg "Concluído."

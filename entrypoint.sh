@@ -45,7 +45,7 @@ fi
 
 # ---- Diretórios ----
 mkdir -p "$FTP_ROOT" /var/log/vsftpd /run/vsftpd /var/run/vsftpd/empty
-chown -R "$PUID:$PGID" "$FTP_ROOT"
+chown "$PUID:$PGID" "$FTP_ROOT"
 chmod 755 "$FTP_ROOT"
 chown root:root /var/run/vsftpd/empty
 chmod 755 /var/run/vsftpd/empty
@@ -79,6 +79,25 @@ if [ -n "${FTP_USERS:-}" ]; then
       echo "[INFO] Usuário criado: $USER"
     fi
   done
+fi
+
+# ---- Restaurar usuários persistidos ----
+PERSIST_FILE="$FTP_ROOT/.ftp_users"
+if [ -f "$PERSIST_FILE" ]; then
+  echo "[INFO] Restaurando usuários persistidos..."
+  while IFS=: read -r RUSER RHASH; do
+    [ -z "$RUSER" ] || [ -z "$RHASH" ] && continue
+    if id -u "$RUSER" >/dev/null 2>&1; then
+      continue  # Já criado via FTP_USERS ou iteração anterior
+    fi
+    HOME_DIR="$FTP_ROOT/$RUSER"
+    useradd -m -d "$HOME_DIR" -s "$FTP_LOGIN_SHELL" "$RUSER" || true
+    echo "$RUSER:$RHASH" | chpasswd -e
+    mkdir -p "$HOME_DIR"
+    chown -R "$RUSER:$RUSER" "$HOME_DIR"
+    chmod 755 "$HOME_DIR"
+    echo "[INFO] Usuário restaurado: $RUSER"
+  done < "$PERSIST_FILE"
 fi
 
 # ---- Render vsftpd.conf ----
