@@ -299,6 +299,14 @@
     .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #ddd; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    .card-info {
+      padding: 5px 16px;
+      font-size: 12px;
+      color: var(--text-light);
+      border-bottom: 1px solid var(--border);
+      min-height: 24px;
+    }
+
     .dl-link {
       color: var(--info);
       font-weight: 600;
@@ -362,6 +370,7 @@
               <span class="card-username"><%= user %></span>
               <span class="status-badge" id="badge-<%= user %>"><span class="spinner"></span></span>
             </div>
+            <div class="card-info" id="info-<%= user %>"></div>
             <div class="card-actions">
               <button class="btn btn-ghost btn-sm" onclick="showDetails('<%= user %>')">Detalhes</button>
               <button class="btn btn-info btn-sm" onclick="openResetPwd('<%= user %>')">Nova Senha</button>
@@ -504,16 +513,19 @@
   // ── Status assíncrono ──────────────────────────────────────
   let userStatuses = {};
 
-  fetch('/users-status')
+  const _statusCtrl = new AbortController();
+  setTimeout(() => _statusCtrl.abort(), 10000);
+  fetch('/users-status', { signal: _statusCtrl.signal })
     .then(r => r.json())
     .then(data => {
       userStatuses = data;
-      Object.entries(data).forEach(([user, status]) => {
-        const badge = document.getElementById('badge-' + user);
-        const btn   = document.getElementById('btn-toggle-' + user);
+      Object.entries(data).forEach(([user, info]) => {
+        const badge  = document.getElementById('badge-' + user);
+        const btn    = document.getElementById('btn-toggle-' + user);
+        const infoEl = document.getElementById('info-' + user);
         if (!badge || !btn) return;
 
-        if (status === 'locked') {
+        if (info.status === 'locked') {
           badge.textContent = 'Desativado';
           badge.className = 'status-badge locked';
           btn.textContent = 'Reativar';
@@ -525,15 +537,26 @@
           btn.className = 'btn btn-warning btn-sm';
         }
         btn.disabled = false;
+
+        if (infoEl) {
+          const d = info.lastFileDays;
+          infoEl.textContent = d === null ? 'Sem arquivos' :
+            d === 0 ? 'Último arquivo: hoje' :
+            d === 1 ? 'Último arquivo: ontem' :
+            'Último arquivo: há ' + d + ' dias';
+        }
       });
     })
     .catch(() => {
-      document.querySelectorAll('.status-badge').forEach(b => { b.textContent = '?'; });
+      document.querySelectorAll('.status-badge').forEach(b => {
+        b.innerHTML = '';
+        b.textContent = '?';
+      });
     });
 
   // ── Toggle Ativar/Desativar ───────────────────────────────
   function doToggle(user) {
-    const action = (userStatuses[user] === 'locked') ? '--enable' : '--disable';
+    const action = (userStatuses[user] && userStatuses[user].status === 'locked') ? '--enable' : '--disable';
     document.getElementById('toggle-form-user').value   = user;
     document.getElementById('toggle-form-action').value = action;
     document.getElementById('toggle-form').submit();

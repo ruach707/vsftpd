@@ -135,26 +135,26 @@ function requireAuth(req, res, next) {
 }
 
 // Helper to exec command in container
-async function execInContainer(cmd) {
-  try {
-    const container = docker.getContainer(CONTAINER_NAME);
-    const exec = await container.exec({
-      Cmd: ['sh', '-c', cmd],
-      AttachStdout: true,
-      AttachStderr: true
-    });
-    const stream = await exec.start();
-    let output = '';
-    stream.on('data', (chunk) => {
-      output += chunk.toString();
-    });
-    return new Promise((resolve, reject) => {
-      stream.on('end', () => resolve(output));
-      stream.on('error', reject);
-    });
-  } catch (err) {
-    throw err;
-  }
+async function execInContainer(cmd, timeoutMs = 15000) {
+  const container = docker.getContainer(CONTAINER_NAME);
+  const exec = await container.exec({
+    Cmd: ['sh', '-c', cmd],
+    AttachStdout: true,
+    AttachStderr: true
+  });
+  const stream = await exec.start();
+  let output = '';
+  stream.on('data', (chunk) => {
+    output += chunk.toString();
+  });
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      stream.destroy();
+      resolve(output);
+    }, timeoutMs);
+    stream.on('end', () => { clearTimeout(timer); resolve(output); });
+    stream.on('error', (err) => { clearTimeout(timer); reject(err); });
+  });
 }
 
 // Login route
@@ -345,16 +345,22 @@ app.get('/users-status', requireAuth, async (req, res) => {
       'for u in $(ls -1 /data/ 2>/dev/null); do ' +
       '[ -d "/data/$u" ] || continue; ' +
       'S=$(passwd -S "$u" 2>/dev/null | awk \'{print $2}\'); ' +
-      'echo "$u:${S:-U}"; ' +
+      'T=$(stat -c %Y /data/$u/* 2>/dev/null | sort -rn | head -1); ' +
+      'echo "$u:${S:-U}:${T:-0}"; ' +
       'done'
     );
+    const nowSec = Date.now() / 1000;
     const result = {};
     output.trim().split('\n').filter(Boolean).forEach(line => {
-      const idx = line.indexOf(':');
-      if (idx > 0) {
-        const user = line.substring(0, idx);
-        const st = line.substring(idx + 1).trim();
-        result[user] = st === 'L' ? 'locked' : 'active';
+      const parts = line.split(':');
+      if (parts.length >= 2) {
+        const user = parts[0];
+        const st = parts[1].trim();
+        const ts = parseInt(parts[2]) || 0;
+        result[user] = {
+          status: st === 'L' ? 'locked' : 'active',
+          lastFileDays: ts > 0 ? Math.floor((nowSec - ts) / 86400) : null
+        };
       }
     });
     res.json(result);
